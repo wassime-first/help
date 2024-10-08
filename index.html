@@ -1,0 +1,96 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Simple Page</title>
+</head>
+<body>
+
+    <h1>HELP !!!!!!!!!!!!!</h1>
+    <br>
+    <br>
+    <p> import spotipy as spotipy
+from bs4 import BeautifulSoup
+import requests
+from spotipy.oauth2 import SpotifyOAuth, SpotifyClientCredentials
+import time
+
+year = (input("pls enter the year u want (example ; 2002-01-17)")) why the f did i get thise eurer   Too many ids requested, reason: None
+url =f"https://www.billboard.com/charts/hot-100/{year}/"
+session = requests.Session()
+headers = {
+        'User-Agent': 'Mozilla/5.0',
+        'Referer': 'https://www.billboard.com/'
+    }
+response = session.get(url=url, headers=headers)
+response.raise_for_status()
+contente = response.text
+class_="c-title  a-no-trucate a-font-primary-bold-s u-letter-spacing-0021 u-font-size-23@tablet lrv-u-font-size-16 u-line-height-125 u-line-height-normal@mobile-max a-truncate-ellipsis u-max-width-245 u-max-width-230@tablet-only u-letter-spacing-0028@tablet"
+soup = BeautifulSoup(contente, "html.parser")
+titles = soup.find_all("h3", id="title-of-a-story", class_="c-title")
+title = [title.text for title in titles]
+title = [t for t in title[6::2]]
+title = [t.strip() for t in title[::2]]
+
+
+SPOTIPY_CLIENT_ID="my id"
+SPOTIPY_CLIENT_SECRET = "my password"
+SPOTIPY_REDIRECT_URI = "http://localhost:8888/callback"
+scope = "user-library-read playlist-modify-public playlist-modify-private"
+sp = spotipy.Spotify(auth_manager=SpotifyOAuth(client_secret=SPOTIPY_CLIENT_SECRET, client_id=SPOTIPY_CLIENT_ID, redirect_uri=SPOTIPY_REDIRECT_URI, scope=scope))
+sp_base = spotipy.Spotify(client_credentials_manager=SpotifyClientCredentials(
+    client_id=SPOTIPY_CLIENT_ID,
+    client_secret=SPOTIPY_CLIENT_SECRET,
+))
+user_id = sp.current_user()["id"]
+
+
+def create_a_new_plalist(name: str, discription: str):
+
+    playlist_name = name
+    playlist_description = discription
+    new_playlist = sp.user_playlist_create(user=user_id, name=playlist_name, public=True, collaborative=True, description=playlist_description)
+    return new_playlist
+
+def search_song_uris(song_names):
+    track_uris = []
+    for song_name in song_names:
+        try:
+            results = sp.search(q=song_name, type='track', limit=1)
+            tracks = results.get('tracks', {}).get('items', [])
+            if tracks:
+                track_uris.append(tracks[0]['uri'])  # Get the first result's URI
+                print(f"Found '{song_name}': {tracks[0]['name']} by {tracks[0]['artists'][0]['name']}")
+            else:
+                print(f"Song '{song_name}' not found.")
+        except spotipy.exceptions.SpotifyException as e:
+            print(f"Error searching for '{song_name}': {e}")
+        time.sleep(1)  # Add a 1 second delay between each search request to avoid rate limiting
+    return track_uris
+
+
+def search_playlist(playlist_name):
+    results = sp.search(q=playlist_name, type='playlist', limit=1)  # Adjust the limit as needed
+    playlists = results['playlists']['items']
+    if playlists:
+        return playlists
+
+    else:
+        print(f"No playlists found for '{playlist_name}'.")
+
+playlist_id = create_a_new_plalist("my pl pls", "f spotify api")
+# playlist_id = search_playlist("wass2024")
+track_uris = search_song_uris(title)
+
+# print(playlist_id)
+# [0]['owner']['id'] == user_id
+# if playlist_id['owner']['id'] == user_id:
+    # Proceed with adding tracks
+sp.playlist_add_items(playlist_id=playlist_id['id'], items=track_uris)
+# print(f"Added {len(track_uris)} songs to the playlist {playlist_id}")
+# else:
+#     print("You are not the owner of this playlist and cannot modify it.")</p>
+
+</body>
+</html>
