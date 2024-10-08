@@ -10,87 +10,88 @@
     <h1>HELP !!!!!!!!!!!!!</h1>
     <br>
     <br>
-    <p> import spotipy as spotipy
-from bs4 import BeautifulSoup
-import requests
-from spotipy.oauth2 import SpotifyOAuth, SpotifyClientCredentials
-import time
+    <p> import spotipy as spotipy<br>
+from bs4 import BeautifulSoup<br>
+import requests<br>
+from spotipy.oauth2 import SpotifyOAuth, SpotifyClientCredentials<br>
+import time<br>
 
-year = (input("pls enter the year u want (example ; 2002-01-17)")) why the f did i get thise eurer   Too many ids requested, reason: None
-url =f"https://www.billboard.com/charts/hot-100/{year}/"
-session = requests.Session()
-headers = {
-        'User-Agent': 'Mozilla/5.0',
-        'Referer': 'https://www.billboard.com/'
+year = (input("pls enter the year u want (example ; 2002-01-17)")) why the f did i get thise eurer   Too many ids requested, reason: None<br>
+url =f"https://www.billboard.com/charts/hot-100/{year}/"<br>
+session = requests.Session()<br>
+headers = {<br>
+        'User-Agent': 'Mozilla/5.0',<br>
+        'Referer': 'https://www.billboard.com/'<br>
+        <br>
     }
-response = session.get(url=url, headers=headers)
-response.raise_for_status()
-contente = response.text
-class_="c-title  a-no-trucate a-font-primary-bold-s u-letter-spacing-0021 u-font-size-23@tablet lrv-u-font-size-16 u-line-height-125 u-line-height-normal@mobile-max a-truncate-ellipsis u-max-width-245 u-max-width-230@tablet-only u-letter-spacing-0028@tablet"
-soup = BeautifulSoup(contente, "html.parser")
-titles = soup.find_all("h3", id="title-of-a-story", class_="c-title")
-title = [title.text for title in titles]
-title = [t for t in title[6::2]]
-title = [t.strip() for t in title[::2]]
+response = session.get(url=url, headers=headers)<br>
+response.raise_for_status()<br>
+contente = response.text<br>
+class_="c-title  a-no-trucate a-font-primary-bold-s u-letter-spacing-0021 u-font-size-23@tablet lrv-u-font-size-16 u-line-height-125 u-line-height-normal@mobile-max a-truncate-ellipsis u-max-width-245 u-max-width-230@tablet-only u-letter-spacing-0028@tablet"<br>
+soup = BeautifulSoup(contente, "html.parser")<br>
+titles = soup.find_all("h3", id="title-of-a-story", class_="c-title")<br>
+title = [title.text for title in titles]<br>
+title = [t for t in title[6::2]]<br>
+title = [t.strip() for t in title[::2]]<br>
+<br>
 
+SPOTIPY_CLIENT_ID="my id"<br>
+SPOTIPY_CLIENT_SECRET = "my password"<br>
+SPOTIPY_REDIRECT_URI = "http://localhost:8888/callback"<br>
+scope = "user-library-read playlist-modify-public playlist-modify-private"<br>
+sp = spotipy.Spotify(auth_manager=SpotifyOAuth(client_secret=SPOTIPY_CLIENT_SECRET, client_id=SPOTIPY_CLIENT_ID, redirect_uri=SPOTIPY_REDIRECT_URI, scope=scope))<br>
+sp_base = spotipy.Spotify(client_credentials_manager=SpotifyClientCredentials(<br>
+    client_id=SPOTIPY_CLIENT_ID,<br>
+    client_secret=SPOTIPY_CLIENT_SECRET,<br>
+))<br>
+user_id = sp.current_user()["id"]<br>
+<br>
 
-SPOTIPY_CLIENT_ID="my id"
-SPOTIPY_CLIENT_SECRET = "my password"
-SPOTIPY_REDIRECT_URI = "http://localhost:8888/callback"
-scope = "user-library-read playlist-modify-public playlist-modify-private"
-sp = spotipy.Spotify(auth_manager=SpotifyOAuth(client_secret=SPOTIPY_CLIENT_SECRET, client_id=SPOTIPY_CLIENT_ID, redirect_uri=SPOTIPY_REDIRECT_URI, scope=scope))
-sp_base = spotipy.Spotify(client_credentials_manager=SpotifyClientCredentials(
-    client_id=SPOTIPY_CLIENT_ID,
-    client_secret=SPOTIPY_CLIENT_SECRET,
-))
-user_id = sp.current_user()["id"]
+def create_a_new_plalist(name: str, discription: str):<br>
 
+    playlist_name = name<br>
+    playlist_description = discription<br>
+    new_playlist = sp.user_playlist_create(user=user_id, name=playlist_name, public=True, collaborative=True, description=playlist_description)<br>
+    return new_playlist<br>
 
-def create_a_new_plalist(name: str, discription: str):
+def search_song_uris(song_names):<br>
+    track_uris = []<br>
+    for song_name in song_names:<br>
+        try:<br>
+            results = sp.search(q=song_name, type='track', limit=1)<br>
+            tracks = results.get('tracks', {}).get('items', [])<br>
+            if tracks:<br>
+                track_uris.append(tracks[0]['uri'])  # Get the first result's URI<br>
+              <br>  print(f"Found '{song_name}': {tracks[0]['name']} by {tracks[0]['artists'][0]['name']}")
+         <br>   else:
+                print(f"Song '{song_name}' not found.")<br>
+        except spotipy.exceptions.SpotifyException as e:<br>
+            print(f"Error searching for '{song_name}': {e}")<br>
+      <br>  time.sleep(1)  # Add a 1 second delay between each search request to avoid rate limiting
+    return track_uris<br>
 
-    playlist_name = name
-    playlist_description = discription
-    new_playlist = sp.user_playlist_create(user=user_id, name=playlist_name, public=True, collaborative=True, description=playlist_description)
-    return new_playlist
+<br>
+def search_playlist(playlist_name):<br>
+   <br> results = sp.search(q=playlist_name, type='playlist', limit=1)  # Adjust the limit as needed
+   <br> playlists = results['playlists']['items']
+ <br>   if playlists:
+        return playlists<br>
 
-def search_song_uris(song_names):
-    track_uris = []
-    for song_name in song_names:
-        try:
-            results = sp.search(q=song_name, type='track', limit=1)
-            tracks = results.get('tracks', {}).get('items', [])
-            if tracks:
-                track_uris.append(tracks[0]['uri'])  # Get the first result's URI
-                print(f"Found '{song_name}': {tracks[0]['name']} by {tracks[0]['artists'][0]['name']}")
-            else:
-                print(f"Song '{song_name}' not found.")
-        except spotipy.exceptions.SpotifyException as e:
-            print(f"Error searching for '{song_name}': {e}")
-        time.sleep(1)  # Add a 1 second delay between each search request to avoid rate limiting
-    return track_uris
+    else:<br>
+        print(f"No playlists found for '{playlist_name}'.")<br>
 
+playlist_id = create_a_new_plalist("my pl pls", "f spotify api")<br>
+# playlist_id = search_playlist("wass2024")<br>
+track_uris = search_song_uris(title)<br>
 
-def search_playlist(playlist_name):
-    results = sp.search(q=playlist_name, type='playlist', limit=1)  # Adjust the limit as needed
-    playlists = results['playlists']['items']
-    if playlists:
-        return playlists
-
-    else:
-        print(f"No playlists found for '{playlist_name}'.")
-
-playlist_id = create_a_new_plalist("my pl pls", "f spotify api")
-# playlist_id = search_playlist("wass2024")
-track_uris = search_song_uris(title)
-
-# print(playlist_id)
-# [0]['owner']['id'] == user_id
-# if playlist_id['owner']['id'] == user_id:
-    # Proceed with adding tracks
-sp.playlist_add_items(playlist_id=playlist_id['id'], items=track_uris)
-# print(f"Added {len(track_uris)} songs to the playlist {playlist_id}")
-# else:
-#     print("You are not the owner of this playlist and cannot modify it.")</p>
+# print(playlist_id)<br>
+# [0]['owner']['id'] == user_id<br>
+# if playlist_id['owner']['id'] == user_id:<br>
+    # Proceed with adding tracks<br>
+sp.playlist_add_items(playlist_id=playlist_id['id'], items=track_uris)<br>
+# print(f"Added {len(track_uris)} songs to the playlist {playlist_id}")<br>
+# else:<br>
+#     print("You are not the owner of this playlist and cannot modify it.")</p><br>
 
 </body>
 </html>
